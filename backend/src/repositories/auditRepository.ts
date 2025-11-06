@@ -10,6 +10,20 @@ export class AuditRepository {
     id_usuario?: number,
     dados_anteriores?: Record<string, any>
   ): Promise<AuditLog> {
+    // Garantir que dados_anteriores seja sempre string JSON ou null
+    let dadosAnterioresJson = null;
+    if (dados_anteriores) {
+      try {
+        // Se já é string, não faz nada. Se é objeto, converte
+        dadosAnterioresJson = typeof dados_anteriores === 'string' 
+          ? dados_anteriores 
+          : JSON.stringify(dados_anteriores);
+      } catch (error) {
+        console.error('❌ Erro ao processar dados_anteriores:', error);
+        dadosAnterioresJson = null;
+      }
+    }
+
     const [result] = await pool.query<ResultSetHeader>(
       `INSERT INTO audit_logs (id_usuario, entidade, entidade_id, acao, dados_anteriores)
        VALUES (?, ?, ?, ?, ?)`,
@@ -18,7 +32,7 @@ export class AuditRepository {
         entidade,
         entidade_id,
         acao,
-        dados_anteriores ? JSON.stringify(dados_anteriores) : null,
+        dadosAnterioresJson,
       ]
     );
 
@@ -83,13 +97,28 @@ export class AuditRepository {
   }
 
   private mapRow(row: any): AuditLog {
+    let dadosAnteriores = undefined;
+    
+    if (row.dados_anteriores) {
+      try {
+        // Se já é objeto, usa direto. Se é string, faz parse
+        dadosAnteriores = typeof row.dados_anteriores === 'string'
+          ? JSON.parse(row.dados_anteriores)
+          : row.dados_anteriores;
+      } catch (error) {
+        console.error('❌ Erro ao fazer parse de dados_anteriores:', error);
+        console.error('❌ Valor recebido:', row.dados_anteriores);
+        dadosAnteriores = undefined;
+      }
+    }
+
     return {
       id: row.id,
       id_usuario: row.id_usuario,
       entidade: row.entidade,
       entidade_id: row.entidade_id,
       acao: row.acao,
-      dados_anteriores: row.dados_anteriores ? JSON.parse(row.dados_anteriores) : undefined,
+      dados_anteriores: dadosAnteriores,
       criado_em: new Date(row.criado_em),
     };
   }

@@ -57,6 +57,34 @@ export class PedidoService {
     return pedido;
   }
 
+  async updateItemPedido(
+  id: number,
+  quantidade: number,
+  observacoes: string | undefined,
+  id_usuario: number
+): Promise<ItemPedido> {
+  const item = await this.getItemPedido(id);
+  if (!item) {
+    throw new Error('Item do pedido não encontrado');
+  }
+
+  if (quantidade < 1) {
+    throw new Error('Quantidade deve ser maior que zero');
+  }
+
+  const itemAtualizado = await pedidoRepository.updateItem(id, quantidade, observacoes);
+
+  // Registrar auditoria
+  await auditRepository.create('itens_pedido', id, 'update', id_usuario, {
+    quantidade_anterior: item.quantidade,
+    observacoes_anterior: item.observacoes,
+    quantidade_nova: quantidade,
+    observacoes_nova: observacoes,
+  });
+
+  return itemAtualizado;
+}
+
   async deletePedido(id: number, id_usuario: number): Promise<boolean> {
     const pedidoAtual = await pedidoRepository.findById(id);
     if (!pedidoAtual) {

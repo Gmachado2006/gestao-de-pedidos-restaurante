@@ -8,7 +8,6 @@ export class PedidoController {
   async getAllPedidos(req: Request, res: Response) {
     try {
       const { status, id_mesa } = req.query;
-
       const filtro: any = {};
       if (status) filtro.status = status;
       if (id_mesa) filtro.id_mesa = parseInt(id_mesa as string);
@@ -20,6 +19,7 @@ export class PedidoController {
         data: pedidos,
       } as ApiResponse);
     } catch (error: any) {
+      console.error('❌ Erro em getAllPedidos:', error);
       return res.status(500).json({
         success: false,
         error: error.message || 'Erro ao buscar pedidos',
@@ -30,7 +30,6 @@ export class PedidoController {
   async getPedidoById(req: Request, res: Response) {
     try {
       const { id } = req.params;
-
       const pedido = await pedidoService.getPedidoById(parseInt(id));
 
       if (!pedido) {
@@ -45,6 +44,7 @@ export class PedidoController {
         data: pedido,
       } as ApiResponse);
     } catch (error: any) {
+      console.error('❌ Erro em getPedidoById:', error);
       return res.status(500).json({
         success: false,
         error: error.message || 'Erro ao buscar pedido',
@@ -71,6 +71,7 @@ export class PedidoController {
         data: pedido,
       } as ApiResponse);
     } catch (error: any) {
+      console.error('❌ Erro em createPedido:', error);
       return res.status(400).json({
         success: false,
         error: error.message || 'Erro ao criar pedido',
@@ -98,6 +99,7 @@ export class PedidoController {
         data: pedido,
       } as ApiResponse);
     } catch (error: any) {
+      console.error('❌ Erro em updatePedidoStatus:', error);
       return res.status(400).json({
         success: false,
         error: error.message || 'Erro ao atualizar pedido',
@@ -131,6 +133,7 @@ export class PedidoController {
         message: 'Pedido deletado com sucesso',
       } as ApiResponse);
     } catch (error: any) {
+      console.error('❌ Erro em deletePedido:', error);
       return res.status(400).json({
         success: false,
         error: error.message || 'Erro ao deletar pedido',
@@ -165,6 +168,7 @@ export class PedidoController {
         data: item,
       } as ApiResponse);
     } catch (error: any) {
+      console.error('❌ Erro em addItemPedido:', error);
       return res.status(400).json({
         success: false,
         error: error.message || 'Erro ao adicionar item ao pedido',
@@ -178,20 +182,77 @@ export class PedidoController {
       const { status_cozinha } = req.body;
       const id_usuario = req.user?.id;
 
-      if (!status_cozinha || !id_usuario) {
+      console.log('🔹 updateItemStatus - Dados recebidos:', { 
+        id, 
+        status_cozinha, 
+        id_usuario,
+        body: req.body 
+      });
+
+      if (!status_cozinha) {
+        console.log('❌ Status da cozinha não foi enviado');
         return res.status(400).json({
           success: false,
-          error: 'Status da cozinha e ID do usuário são obrigatórios',
+          error: 'Status da cozinha é obrigatório',
         } as ApiResponse);
       }
 
+      if (!id_usuario) {
+        console.log('❌ ID do usuário não encontrado');
+        return res.status(400).json({
+          success: false,
+          error: 'ID do usuário é obrigatório',
+        } as ApiResponse);
+      }
+
+      console.log('🔹 Chamando pedidoService.updateItemStatus...');
       const item = await pedidoService.updateItemStatus(parseInt(id), status_cozinha, id_usuario);
+
+      console.log('✅ Item atualizado com sucesso:', item);
 
       return res.json({
         success: true,
         data: item,
       } as ApiResponse);
     } catch (error: any) {
+      console.error('❌ ERRO em updateItemStatus:');
+      console.error('❌ Mensagem:', error.message);
+      console.error('❌ Stack:', error.stack);
+      return res.status(400).json({
+        success: false,
+        error: error.message || 'Erro ao atualizar item',
+      } as ApiResponse);
+    }
+  }
+
+  async updateItemPedido(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { quantidade, observacoes } = req.body;
+      const id_usuario = req.user?.id;
+
+      if (!quantidade || quantidade < 1) {
+        return res.status(400).json({
+          success: false,
+          error: 'Quantidade deve ser maior que zero',
+        } as ApiResponse);
+      }
+
+      if (!id_usuario) {
+        return res.status(400).json({
+          success: false,
+          error: 'ID do usuário é obrigatório',
+        } as ApiResponse);
+      }
+
+      const item = await pedidoService.updateItemPedido(parseInt(id), quantidade, observacoes, id_usuario);
+
+      return res.json({
+        success: true,
+        data: item,
+      } as ApiResponse);
+    } catch (error: any) {
+      console.error('❌ Erro em updateItemPedido:', error);
       return res.status(400).json({
         success: false,
         error: error.message || 'Erro ao atualizar item',
@@ -225,6 +286,7 @@ export class PedidoController {
         message: 'Item deletado com sucesso',
       } as ApiResponse);
     } catch (error: any) {
+      console.error('❌ Erro em deleteItemPedido:', error);
       return res.status(400).json({
         success: false,
         error: error.message || 'Erro ao deletar item',

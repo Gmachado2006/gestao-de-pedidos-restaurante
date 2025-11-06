@@ -12,17 +12,28 @@ export class PedidoRepository {
     if (pedidoRows.length === 0) return null;
 
     const [itensRows] = await pool.query<RowDataPacket[]>(
-      'SELECT * FROM itens_pedido WHERE id_pedido = ? ORDER BY criado_em ASC',
+      `SELECT ip.*, 
+              p.id as produto_id, 
+              p.nome as produto_nome, 
+              p.descricao as produto_descricao,
+              p.preco as produto_preco,
+              p.disponivel as produto_disponivel,
+              p.id_categoria as produto_id_categoria,
+              p.criado_em as produto_criado_em
+       FROM itens_pedido ip
+       LEFT JOIN produtos p ON ip.id_produto = p.id
+       WHERE ip.id_pedido = ? 
+       ORDER BY ip.criado_em ASC`,
       [id]
     );
 
     return {
       ...this.mapRow(pedidoRows[0]),
-      itens: itensRows.map(row => this.mapItemRow(row)),
+      itens: itensRows.map(row => this.mapItemRowWithProduct(row)),
     };
   }
 
-  async findAll(filtro?: { status?: StatusPedido; id_mesa?: number }): Promise<Pedido[]> {
+  async findAll(filtro?: { status?: StatusPedido; id_mesa?: number }): Promise<(Pedido & { itens: ItemPedido[] })[]> {
     let query = 'SELECT * FROM pedidos WHERE 1=1';
     const values: any[] = [];
 
@@ -37,8 +48,24 @@ export class PedidoRepository {
 
     query += ' ORDER BY criado_em DESC';
 
-    const [rows] = await pool.query<RowDataPacket[]>(query, values);
-    return rows.map(row => this.mapRow(row));
+    const [pedidoRows] = await pool.query<RowDataPacket[]>(query, values);
+    
+    // Para cada pedido, buscar seus itens
+    const pedidosComItens = await Promise.all(
+      pedidoRows.map(async (pedidoRow) => {
+        const [itensRows] = await pool.query<RowDataPacket[]>(
+          'SELECT * FROM itens_pedido WHERE id_pedido = ? ORDER BY criado_em ASC',
+          [pedidoRow.id]
+        );
+
+        return {
+          ...this.mapRow(pedidoRow),
+          itens: itensRows.map(row => this.mapItemRow(row)),
+        };
+      })
+    );
+
+    return pedidosComItens;
   }
 
   async create(id_mesa: number, id_garcom: number): Promise<Pedido> {
@@ -132,6 +159,31 @@ export class PedidoRepository {
     return this.mapItemRow(rows[0]);
   }
 
+  async updateItem(
+  id: number,
+  quantidade: number,
+  observacoes?: string
+): Promise<ItemPedido> {
+  await pool.query(
+    'UPDATE itens_pedido SET quantidade = ?, observacoes = ? WHERE id = ?',
+    [quantidade, observacoes || null, id]
+  );
+
+  const [rows] = await pool.query<RowDataPacket[]>(
+    'SELECT * FROM itens_pedido WHERE id = ?',
+    [id]
+  );
+
+  if (rows.length === 0) {
+    throw new Error('Item não encontrado após atualização');
+  }
+
+  // Atualizar o total do pedido
+  await this.updateTotal(rows[0].id_pedido);
+
+  return this.mapItemRow(rows[0]);
+}
+
   async deleteItem(id: number): Promise<boolean> {
     const [itemRows] = await pool.query<RowDataPacket[]>(
       'SELECT id_pedido FROM itens_pedido WHERE id = ?',
@@ -175,4 +227,26 @@ export class PedidoRepository {
       criado_em: new Date(row.criado_em),
     };
   }
+
+  private mapItemRowWithProduct(row: any): ItemPedido {
+  return {
+    id: row.id,
+    id_pedido: row.id_pedido,
+    id_produto: row.id_produto,
+    quantidade: row.quantidade,
+    preco_unitario: parseFloat(row.preco_unitario),
+    observacoes: row.observacoes,
+    status_cozinha: row.status_cozinha,
+    criado_em: new Date(row.criado_em),
+    produto: row.produto_id ? {
+      id: row.produto_id,
+      nome: row.produto_nome,
+      descricao: row.produto_descricao,
+      preco: parseFloat(row.produto_preco),
+      disponivel: Boolean(row.produto_disponivel),
+      id_categoria: row.produto_id_categoria,
+      criado_em: new Date(row.produto_criado_em),
+    } : undefined,
+  };
+}
 }

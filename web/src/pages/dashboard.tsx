@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
@@ -23,12 +24,25 @@ export default function Dashboard() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   
-  // Estados do modal
+  // Estados do modal de novo pedido
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mesaSelecionada, setMesaSelecionada] = useState('');
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([]);
   const [criandoPedido, setCriandoPedido] = useState(false);
   const [carregandoProdutos, setCarregandoProdutos] = useState(false);
+  const [montado, setMontado] = useState(false);
+  
+  // Estados do modal de edição de item
+  const [mostrarModalEdicaoItem, setMostrarModalEdicaoItem] = useState(false);
+  const [itemEditando, setItemEditando] = useState<ItemPedido | null>(null);
+  const [quantidadeEdicao, setQuantidadeEdicao] = useState(1);
+  const [observacoesEdicao, setObservacoesEdicao] = useState('');
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+
+  // Evitar hydration - esperar montar no cliente
+  useEffect(() => {
+    setMontado(true);
+  }, []);
 
   useEffect(() => {
     if (!usuario) {
@@ -148,10 +162,8 @@ export default function Dashboard() {
     try {
       setCriandoPedido(true);
       
-      // 1. Criar o pedido
       const pedidoCriado = await pedidoService.createPedido(Number(mesaSelecionada));
       
-      // 2. Adicionar todos os itens
       for (const item of carrinho) {
         await pedidoService.addItemPedido(
           pedidoCriado.id,
@@ -162,16 +174,60 @@ export default function Dashboard() {
         );
       }
       
-      // 3. Fechar modal e recarregar
       setMostrarModal(false);
       setMesaSelecionada('');
       setCarrinho([]);
-      carregarPedidos();
+      
+      setTimeout(() => {
+        carregarPedidos();
+      }, 500);
+      
       setErro('');
     } catch (error: any) {
       setErro(error.message || 'Erro ao criar pedido');
     } finally {
       setCriandoPedido(false);
+    }
+  };
+
+  const handleAbrirEdicaoItem = (item: ItemPedido) => {
+    setItemEditando(item);
+    setQuantidadeEdicao(item.quantidade);
+    setObservacoesEdicao(item.observacoes || '');
+    setMostrarModalEdicaoItem(true);
+  };
+
+  const handleSalvarEdicaoItem = async () => {
+    if (!itemEditando) return;
+
+    try {
+      setSalvandoEdicao(true);
+      await pedidoService.updateItemPedido(
+        itemEditando.id,
+        quantidadeEdicao,
+        observacoesEdicao || undefined
+      );
+      
+      setMostrarModalEdicaoItem(false);
+      setItemEditando(null);
+      carregarPedidos();
+      setErro('');
+    } catch (error: any) {
+      setErro(error.message || 'Erro ao atualizar item');
+    } finally {
+      setSalvandoEdicao(false);
+    }
+  };
+
+  const handleExcluirItem = async (itemId: number) => {
+    if (!confirm('Tem certeza que deseja excluir este item?')) return;
+
+    try {
+      await pedidoService.deleteItemPedido(itemId);
+      carregarPedidos();
+      setErro('');
+    } catch (error: any) {
+      setErro(error.message || 'Erro ao excluir item');
     }
   };
 
@@ -203,6 +259,17 @@ export default function Dashboard() {
     return itens;
   };
 
+  // Função para buscar o nome do produto pelo id
+  const obterNomeProduto = (item: ItemPedido) => {
+    // Assumindo que você tem acesso ao nome do produto através do item
+    // Se não tiver, você precisará fazer um join ou buscar de outra forma
+    return `Produto #${item.id_produto}`;
+  };
+
+  if (!montado || !usuario) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -210,7 +277,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-orange-500">Feijuca Gourmet</h1>
-            <p className="text-gray-600">Bem-vindo, {usuario?.nome}!</p>
+            <p className="text-gray-600">Bem-vindo, {usuario.nome}!</p>
           </div>
           <div className="flex gap-3">
             <button
@@ -232,8 +299,9 @@ export default function Dashboard() {
       {/* Conteúdo */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {erro && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-            {erro}
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 flex justify-between items-center">
+            <span>{erro}</span>
+            <button onClick={() => setErro('')} className="text-red-700 font-bold">✕</button>
           </div>
         )}
 
@@ -256,6 +324,7 @@ export default function Dashboard() {
                     {obterItensPorStatus(status).length} itens
                   </p>
                 </div>
+
                 <div className="p-4 space-y-3 min-h-96 overflow-y-auto">
                   {obterItensPorStatus(status).length === 0 ? (
                     <p className="text-gray-400 text-center py-8">Nenhum item</p>
@@ -263,38 +332,79 @@ export default function Dashboard() {
                     obterItensPorStatus(status).map((item) => (
                       <div
                         key={item.id}
-                        className="bg-gray-50 border-l-4 border-orange-500 p-3 rounded hover:shadow-md transition"
+                        className="bg-gray-50 border-l-4 border-orange-500 p-4 rounded hover:shadow-md transition"
                       >
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="font-semibold text-sm">Pedido #{item.id_pedido}</span>
-                          <span className="text-xs bg-orange-500 text-white px-2 py-1 rounded">
-                            Item #{item.id}
-                          </span>
+                        {/* Cabeçalho do Card */}
+                        <div className="flex justify-between items-start mb-3 pb-2 border-b border-gray-200">
+                          <div>
+                            <span className="font-bold text-gray-800 text-base">
+                              Pedido #{item.id_pedido}
+                            </span>
+                            <span className="text-xs text-gray-500 ml-2">
+                              Item #{item.id}
+                            </span>
+                          </div>
                         </div>
-                        <p className="text-gray-600 text-sm mb-2">
-                          Qtd: {item.quantidade}
-                        </p>
-                        {item.observacoes && (
-                          <p className="text-xs text-gray-500 italic mb-2">
-                            Obs: {item.observacoes}
-                          </p>
-                        )}
-                        {status !== 'entregue' && (
+
+                        {/* Informações do Produto */}
+                        <div className="mb-3">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <p className="font-semibold text-gray-800 text-sm">
+                                {obterNomeProduto(item)}
+                              </p>
+                              <p className="text-gray-600 text-sm">
+                                Quantidade: <span className="font-semibold">{item.quantidade}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Observações */}
+                          {item.observacoes && (
+                            <div className="mt-2 bg-yellow-50 border-l-2 border-yellow-400 p-2 rounded">
+                              <p className="text-xs font-semibold text-yellow-800 mb-1">
+                                Observações:
+                              </p>
+                              <p className="text-xs text-yellow-700">
+                                {item.observacoes}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Botões de Ação */}
+                        <div className="flex gap-2 mt-3">
+                          {status !== 'entregue' && (
+                            <button
+                              onClick={() => {
+                                const proximoStatus: Record<StatusCozinha, StatusCozinha> = {
+                                  'recebido': 'em_preparo',
+                                  'em_preparo': 'pronto',
+                                  'pronto': 'entregue',
+                                  'entregue': 'entregue',
+                                };
+                                handleStatusChange(item.id, proximoStatus[status]);
+                              }}
+                              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-2 px-3 rounded transition"
+                            >
+                              Avançar →
+                            </button>
+                          )}
                           <button
-                            onClick={() => {
-                              const proximoStatus: Record<StatusCozinha, StatusCozinha> = {
-                                'recebido': 'em_preparo',
-                                'em_preparo': 'pronto',
-                                'pronto': 'entregue',
-                                'entregue': 'entregue',
-                              };
-                              handleStatusChange(item.id, proximoStatus[status]);
-                            }}
-                            className="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-1 px-2 rounded mt-2 transition"
+                            onClick={() => handleAbrirEdicaoItem(item)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded transition"
+                            title="Editar item"
                           >
-                            Próximo →
+                            Editar
                           </button>
-                        )}
+                          <button
+                            onClick={() => handleExcluirItem(item.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-3 rounded transition"
+                            title="Excluir item"
+                          >
+                            Excluir
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
@@ -309,14 +419,11 @@ export default function Dashboard() {
       {mostrarModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Header do Modal */}
             <div className="bg-orange-500 text-white p-4">
               <h2 className="text-2xl font-bold">Novo Pedido</h2>
             </div>
 
-            {/* Corpo do Modal */}
             <div className="flex-1 overflow-y-auto p-6">
-              {/* Seleção da Mesa */}
               <div className="mb-6">
                 <label className="block text-gray-700 text-sm font-bold mb-2">
                   Número da Mesa *
@@ -332,7 +439,6 @@ export default function Dashboard() {
                 />
               </div>
 
-              {/* Lista de Produtos */}
               <div className="mb-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-3">Produtos Disponíveis</h3>
                 
@@ -365,7 +471,6 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {/* Carrinho */}
               <div className="mb-4">
                 <h3 className="text-lg font-bold text-gray-800 mb-3">
                   Itens do Pedido ({carrinho.length})
@@ -391,18 +496,17 @@ export default function Dashboard() {
                           </div>
                           <button
                             onClick={() => handleRemoverDoCarrinho(item.id_produto)}
-                            className="text-red-500 hover:text-red-700 font-bold"
+                            className="text-red-500 hover:text-red-700 font-bold text-sm px-2"
                             disabled={criandoPedido}
                           >
-                            ✕
+                            Remover
                           </button>
                         </div>
                         
-                        {/* Quantidade */}
                         <div className="flex items-center gap-2 mb-2">
                           <button
                             onClick={() => handleAlterarQuantidade(item.id_produto, item.quantidade - 1)}
-                            className="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded"
+                            className="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded text-sm"
                             disabled={criandoPedido}
                           >
                             -
@@ -410,14 +514,13 @@ export default function Dashboard() {
                           <span className="font-bold">{item.quantidade}</span>
                           <button
                             onClick={() => handleAlterarQuantidade(item.id_produto, item.quantidade + 1)}
-                            className="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded"
+                            className="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded text-sm"
                             disabled={criandoPedido}
                           >
                             +
                           </button>
                         </div>
                         
-                        {/* Observações */}
                         <input
                           type="text"
                           placeholder="Observações (opcional)"
@@ -432,7 +535,6 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {/* Total */}
               {carrinho.length > 0 && (
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center text-xl font-bold">
@@ -443,7 +545,6 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Footer do Modal */}
             <div className="border-t p-4 flex gap-3">
               <button
                 onClick={handleCriarPedidoCompleto}
@@ -461,6 +562,76 @@ export default function Dashboard() {
                 }}
                 disabled={criandoPedido}
                 className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 text-gray-800 font-bold py-3 px-4 rounded transition"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edição de Item */}
+      {mostrarModalEdicaoItem && itemEditando && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="bg-blue-500 text-white p-4 rounded-t-lg">
+              <h2 className="text-xl font-bold">Editar Item #{itemEditando.id}</h2>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  Quantidade
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setQuantidadeEdicao(Math.max(1, quantidadeEdicao - 1))}
+                    className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded font-bold"
+                    disabled={salvandoEdicao}
+                  >
+                    -
+                  </button>
+                  <span className="text-xl font-bold">{quantidadeEdicao}</span>
+                  <button
+                    onClick={() => setQuantidadeEdicao(quantidadeEdicao + 1)}
+                    className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded font-bold"
+                    disabled={salvandoEdicao}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  Observações
+                </label>
+                <textarea
+                  value={observacoesEdicao}
+                  onChange={(e) => setObservacoesEdicao(e.target.value)}
+                  className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  placeholder="Observações do item"
+                  disabled={salvandoEdicao}
+                />
+              </div>
+            </div>
+
+            <div className="border-t p-4 flex gap-3">
+              <button
+                onClick={handleSalvarEdicaoItem}
+                disabled={salvandoEdicao}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded transition"
+              >
+                {salvandoEdicao ? 'Salvando...' : 'Salvar'}
+              </button>
+              <button
+                onClick={() => {
+                  setMostrarModalEdicaoItem(false);
+                  setItemEditando(null);
+                }}
+                disabled={salvandoEdicao}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded transition"
               >
                 Cancelar
               </button>

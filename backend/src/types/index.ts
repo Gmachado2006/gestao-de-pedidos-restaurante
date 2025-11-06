@@ -73,6 +73,7 @@ export interface ItemPedido {
   observacoes?: string;
   status_cozinha: StatusCozinha;
   criado_em: Date;
+  produto?: Produto; // <- ADICIONADO
 }
 
 export interface Pagamento {
