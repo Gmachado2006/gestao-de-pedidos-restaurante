@@ -1,9 +1,11 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { pedidoService } from '@/services/pedidoService';
 import { produtoService } from '@/services/produtoService';
+import { Temporizador } from '@/components/Temporizador';
 import { Pedido, ItemPedido, StatusCozinha, Produto } from '@/types';
 import io from 'socket.io-client';
 
@@ -259,13 +261,6 @@ export default function Dashboard() {
     return itens;
   };
 
-  // Função para buscar o nome do produto pelo id
-  const obterNomeProduto = (item: ItemPedido) => {
-    // Assumindo que você tem acesso ao nome do produto através do item
-    // Se não tiver, você precisará fazer um join ou buscar de outra forma
-    return `Produto #${item.id_produto}`;
-  };
-
   if (!montado || !usuario) {
     return null;
   }
@@ -334,27 +329,31 @@ export default function Dashboard() {
                         key={item.id}
                         className="bg-gray-50 border-l-4 border-orange-500 p-4 rounded hover:shadow-md transition"
                       >
-                        {/* Cabeçalho do Card */}
+                        {/* Cabeçalho do Card com Temporizador */}
                         <div className="flex justify-between items-start mb-3 pb-2 border-b border-gray-200">
-                          <div>
+                          <div className="flex items-center">
                             <span className="font-bold text-gray-800 text-base">
                               Pedido #{item.id_pedido}
                             </span>
-                            <span className="text-xs text-gray-500 ml-2">
-                              Item #{item.id}
-                            </span>
+                            <Temporizador iniciado_em={item.iniciado_em} status={item.status_cozinha} />
                           </div>
+                          <span className="text-xs text-gray-500">
+                            Item #{item.id}
+                          </span>
                         </div>
 
                         {/* Informações do Produto */}
                         <div className="mb-3">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
-                              <p className="font-semibold text-gray-800 text-sm">
-                                {obterNomeProduto(item)}
-                              </p>
-                              <p className="text-gray-600 text-sm">
-                                Quantidade: <span className="font-semibold">{item.quantidade}</span>
+                              <h4 className="font-bold text-gray-800 mb-1">
+                                {item.produto?.nome || 'Produto não encontrado'}
+                              </h4>
+                              <p className="text-sm text-gray-600 mb-1">
+                                Qtd: {item.quantidade} x R$ {item.preco_unitario.toFixed(2)} = 
+                                <span className="font-bold text-green-600 ml-1">
+                                  R$ {(item.quantidade * item.preco_unitario).toFixed(2)}
+                                </span>
                               </p>
                             </div>
                           </div>
@@ -363,7 +362,7 @@ export default function Dashboard() {
                           {item.observacoes && (
                             <div className="mt-2 bg-yellow-50 border-l-2 border-yellow-400 p-2 rounded">
                               <p className="text-xs font-semibold text-yellow-800 mb-1">
-                                Observações:
+                                📝 Observações:
                               </p>
                               <p className="text-xs text-yellow-700">
                                 {item.observacoes}
@@ -375,36 +374,41 @@ export default function Dashboard() {
                         {/* Botões de Ação */}
                         <div className="flex gap-2 mt-3">
                           {status !== 'entregue' && (
-                            <button
-                              onClick={() => {
-                                const proximoStatus: Record<StatusCozinha, StatusCozinha> = {
-                                  'recebido': 'em_preparo',
-                                  'em_preparo': 'pronto',
-                                  'pronto': 'entregue',
-                                  'entregue': 'entregue',
-                                };
-                                handleStatusChange(item.id, proximoStatus[status]);
-                              }}
-                              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-2 px-3 rounded transition"
-                            >
-                              Avançar →
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleAbrirEdicaoItem(item)}
+                                className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded transition"
+                                title="Editar item"
+                              >
+                                 Editar
+                              </button>
+                              <button
+                                onClick={() => handleExcluirItem(item.id)}
+                                className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-3 rounded transition"
+                                title="Excluir item"
+                              >
+                                 Excluir
+                              </button>
+                            </>
                           )}
-                          <button
-                            onClick={() => handleAbrirEdicaoItem(item)}
-                            className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded transition"
-                            title="Editar item"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => handleExcluirItem(item.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-3 rounded transition"
-                            title="Excluir item"
-                          >
-                            Excluir
-                          </button>
                         </div>
+                        
+                        {status !== 'entregue' && (
+                          <button
+                            onClick={() => {
+                              const proximoStatus: Record<StatusCozinha, StatusCozinha> = {
+                                'recebido': 'em_preparo',
+                                'em_preparo': 'pronto',
+                                'pronto': 'entregue',
+                                'entregue': 'entregue',
+                              };
+                              handleStatusChange(item.id, proximoStatus[status]);
+                            }}
+                            className="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-2 px-3 rounded mt-2 transition"
+                          >
+                            Avançar →
+                          </button>
+                        )}
                       </div>
                     ))
                   )}
@@ -575,7 +579,8 @@ export default function Dashboard() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full">
             <div className="bg-blue-500 text-white p-4 rounded-t-lg">
-              <h2 className="text-xl font-bold">Editar Item #{itemEditando.id}</h2>
+              <h2 className="text-xl font-bold">Editar Item</h2>
+              <p className="text-sm opacity-90">{itemEditando.produto?.nome || `Item #${itemEditando.id}`}</p>
             </div>
 
             <div className="p-6">
@@ -591,7 +596,7 @@ export default function Dashboard() {
                   >
                     -
                   </button>
-                  <span className="text-xl font-bold">{quantidadeEdicao}</span>
+                  <span className="text-2xl font-bold">{quantidadeEdicao}</span>
                   <button
                     onClick={() => setQuantidadeEdicao(quantidadeEdicao + 1)}
                     className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded font-bold"
@@ -600,6 +605,11 @@ export default function Dashboard() {
                     +
                   </button>
                 </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Total: <span className="font-bold text-green-600">
+                    R$ {(quantidadeEdicao * itemEditando.preco_unitario).toFixed(2)}
+                  </span>
+                </p>
               </div>
 
               <div className="mb-4">
@@ -611,7 +621,7 @@ export default function Dashboard() {
                   onChange={(e) => setObservacoesEdicao(e.target.value)}
                   className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
-                  placeholder="Observações do item"
+                  placeholder="Observações do item (opcional)"
                   disabled={salvandoEdicao}
                 />
               </div>
@@ -621,9 +631,9 @@ export default function Dashboard() {
               <button
                 onClick={handleSalvarEdicaoItem}
                 disabled={salvandoEdicao}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded transition"
+                className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded transition"
               >
-                {salvandoEdicao ? 'Salvando...' : 'Salvar'}
+                {salvandoEdicao ? 'Salvando...' : '💾 Salvar'}
               </button>
               <button
                 onClick={() => {
