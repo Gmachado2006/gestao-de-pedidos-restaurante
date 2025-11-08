@@ -25,4 +25,57 @@ export const produtoService = {
     
     return response.data.data;
   },
+
+  async createProduto(
+    nome: string,
+    preco: number,
+    id_categoria: number,
+    descricao?: string,
+    disponivel: boolean = true
+  ): Promise<Produto> {
+    const response = await api.post<ApiResponse<Produto>>('/api/produtos', {
+      nome,
+      preco,
+      id_categoria,
+      descricao,
+      disponivel,
+    });
+    
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error || 'Erro ao criar produto');
+    }
+    
+    return response.data.data;
+  },
+
+  async updateProduto(
+    id: number,
+    nome?: string,
+    preco?: number,
+    id_categoria?: number,
+    descricao?: string,
+    disponivel?: boolean
+  ): Promise<Produto> {
+    const response = await api.put<ApiResponse<Produto>>(`/api/produtos/${id}`, {
+      nome,
+      preco,
+      id_categoria,
+      descricao,
+      disponivel,
+    });
+    
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error || 'Erro ao atualizar produto');
+    }
+    
+    return response.data.data;
+  },
+
+  async deleteProduto(id: number): Promise<void> {
+    const response = await api.delete<ApiResponse>(`/api/produtos/${id}`);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Erro ao deletar produto');
+    }
+  },
 };

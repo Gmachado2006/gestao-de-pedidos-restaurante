@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { pedidoService } from '@/services/pedidoService';
 import { produtoService } from '@/services/produtoService';
+import { ModalCardapio } from '@/components/ModalCardapio';
 import { Temporizador } from '@/components/Temporizador';
 import { Pedido, ItemPedido, StatusCozinha, Produto } from '@/types';
 import io from 'socket.io-client';
@@ -40,6 +41,9 @@ export default function Dashboard() {
   const [quantidadeEdicao, setQuantidadeEdicao] = useState(1);
   const [observacoesEdicao, setObservacoesEdicao] = useState('');
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+
+  // Estado do modal de cardápio
+  const [mostrarModalCardapio, setMostrarModalCardapio] = useState(false);
 
   // Evitar hydration - esperar montar no cliente
   useEffect(() => {
@@ -280,6 +284,12 @@ export default function Dashboard() {
               className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition"
             >
               + Novo Pedido
+            </button>
+            <button
+              onClick={() => setMostrarModalCardapio(true)}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition"
+            >
+             Cardápio
             </button>
             <button
               onClick={handleLogout}
@@ -649,6 +659,12 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Modal Cardápio */}
+      <ModalCardapio 
+        mostrar={mostrarModalCardapio} 
+        onFechar={() => setMostrarModalCardapio(false)} 
+      />
     </div>
   );
 }
