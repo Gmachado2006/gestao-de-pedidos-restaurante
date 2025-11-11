@@ -392,7 +392,22 @@ export default function Dashboard() {
                             </>
                           )}
                         </div>
-                        
+                        {status !== 'recebido' && (
+                          <button
+                            onClick={() => {
+                              const statusAnterior: Record<StatusCozinha, StatusCozinha> = {
+                                'recebido': 'recebido',
+                                'em_preparo': 'recebido',
+                                'pronto': 'em_preparo',
+                                'entregue': 'pronto',
+                              };
+                              handleStatusChange(item.id, statusAnterior[status]);
+                            }}
+                            className="w-full bg-gray-500 hover:bg-gray-600 text-white text-xs font-bold py-2 px-3 rounded mt-2 transition"
+                          >
+                            ← Voltar Etapa
+                          </button>
+                        )}
                         {status !== 'entregue' && (
                           <button
                             onClick={() => {
