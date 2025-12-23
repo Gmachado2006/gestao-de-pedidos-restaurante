@@ -341,29 +341,29 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-slate-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-orange-500">Feijuca Gourmet</h1>
-            <p className="text-gray-600">Bem-vindo, {usuario.nome}!</p>
+            <h1 className="text-3xl font-bold text-sky-50">Feijuca Gourmet</h1>
+            <p className="text-sky-50">Bem-vindo, {usuario.nome}!</p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={handleAbrirModal}
-              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition"
+              className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded transition"
             >
               + Novo Pedido
             </button>
             <button
               onClick={() => setMostrarModalCardapio(true)}
-              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition"
+              className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded transition"
             >
-              📋 Cardápio
+               Cardápio
             </button>
             <button
               onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition"
+              className="bg-rose-800 hover:bg-rose-900 text-white font-bold py-2 px-4 rounded transition"
             >
               Sair
             </button>
@@ -387,7 +387,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {statusColunas.map((status) => (
               <div key={status} className="bg-white rounded-lg shadow">
-                <div className="bg-orange-500 text-white p-4 rounded-t-lg">
+                <div className="bg-slate-800 text-white p-4 rounded-t-lg">
                   <h2 className="text-lg font-bold capitalize">
                     {status === 'recebido' && 'Pedidos Recebidos'}
                     {status === 'em_preparo' && 'Em Preparação'}
@@ -409,9 +409,9 @@ export default function Dashboard() {
                       return (
                         <div
                           key={pedido.id}
-                          className="bg-gray-50 border-l-4 border-orange-500 p-4 rounded hover:shadow-md transition"
+                          className="bg-gray-100 border-l-4 border-slate-600 p-4 rounded hover:shadow-md transition"
                         >
-                          <div className="flex justify-between items-start mb-3 pb-3 border-b-2 border-orange-200">
+                          <div className="flex justify-between items-start mb-3 pb-3 border-b-2 border-slate-600">
                             <div className="flex items-center gap-2">
                               <span className="text-2xl">🍽️</span>
                               <div>
@@ -449,7 +449,7 @@ export default function Dashboard() {
                                     </div>
                                     {item.observacoes && (
                                       <p className="text-xs text-yellow-700 italic ml-6 mt-1 bg-yellow-50 px-2 py-1 rounded">
-                                        💬 {item.observacoes}
+                                         {item.observacoes}
                                       </p>
                                     )}
                                   </div>
@@ -491,7 +491,7 @@ export default function Dashboard() {
                             {status !== 'recebido' && (
                               <button
                                 onClick={() => handleVoltarPedido(pedido, status)}
-                                className="flex-1 bg-gray-400 hover:bg-gray-500 text-white text-sm font-bold py-2 px-3 rounded transition"
+                                className="flex-1 bg-slate-600 hover:bg-slate-700 text-white text-sm font-bold py-2 px-3 rounded transition"
                               >
                                 ← Voltar
                               </button>
@@ -500,7 +500,7 @@ export default function Dashboard() {
                             {status !== 'entregue' && (
                               <button
                                 onClick={() => handleAvancarPedido(pedido, status)}
-                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2 px-3 rounded transition"
+                                className="flex-1 bg-slate-600 hover:bg-slate-700 text-white text-sm font-bold py-2 px-3 rounded transition"
                               >
                                 Avançar →
                               </button>
@@ -509,9 +509,9 @@ export default function Dashboard() {
 
                           <button
                             onClick={() => handleExcluirPedido(pedido.id)}
-                            className="w-full mt-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-3 rounded transition"
+                            className="w-full mt-2 bg-rose-800 hover:bg-rose-900 text-white text-xs font-bold py-2 px-3 rounded transition"
                           >
-                            🗑️ Excluir Pedido
+                             Excluir Pedido
                           </button>
                         </div>
                       );
@@ -527,7 +527,7 @@ export default function Dashboard() {
       {mostrarModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="bg-orange-500 text-white p-4">
+            <div className="bg-slate-800 text-white p-4">
               <h2 className="text-2xl font-bold">Novo Pedido</h2>
             </div>
 
@@ -537,11 +537,11 @@ export default function Dashboard() {
                   Número da Mesa *
                 </label>
                 <input
-                  type="number"
+                  type="number" 
                   min="1"
                   value={mesaSelecionada}
                   onChange={(e) => setMesaSelecionada(e.target.value)}
-                  className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="shadow border rounded w-full py-2 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-800"
                   placeholder="Digite o número da mesa"
                   disabled={criandoPedido}
                 />
@@ -607,7 +607,7 @@ export default function Dashboard() {
                               e.stopPropagation();
                               handleRemoverDoCarrinho(item.id_produto);
                             }}
-                            className="text-red-500 hover:text-red-700 font-bold text-sm px-2"
+                            className="text-rose-800 hover:text-rose-900 font-bold text-sm px-2"
                             disabled={criandoPedido}
                           >
                             Remover
@@ -667,7 +667,7 @@ export default function Dashboard() {
               <button
                 onClick={handleCriarPedidoCompleto}
                 disabled={criandoPedido || !mesaSelecionada || carrinho.length === 0}
-                className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded transition"
+                className="flex-1 bg-green-700 hover:bg-green-800 disabled:bg-slate-800 text-white font-bold py-3 px-4 rounded transition"
               >
                 {criandoPedido ? 'Criando Pedido...' : `Criar Pedido (${carrinho.length} itens)`}
               </button>
@@ -691,7 +691,7 @@ export default function Dashboard() {
       {mostrarModalEdicaoItem && itemEditando && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="bg-blue-500 text-white p-4 rounded-t-lg">
+            <div className="bg-slate-800 text-white p-4 rounded-t-lg">
               <h2 className="text-xl font-bold">Editar Item</h2>
               <p className="text-sm opacity-90">{itemEditando.produto?.nome || `Item #${itemEditando.id}`}</p>
             </div>
@@ -744,7 +744,7 @@ export default function Dashboard() {
               <button
                 onClick={handleSalvarEdicaoItem}
                 disabled={salvandoEdicao}
-                className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded transition"
+                className="flex-1 bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded transition"
               >
                 {salvandoEdicao ? 'Salvando...' : 'Salvar'}
               </button>
