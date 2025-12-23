@@ -153,8 +153,8 @@ export function ModalCardapio({ mostrar, onFechar }: ModalCardapioProps) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-orange-500 text-white p-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold">📋 Gerenciar Cardápio</h2>
+        <div className="bg-slate-800 text-white p-4 flex justify-between items-center">
+          <h2 className="text-2xl font-bold"> Gerenciar Cardápio</h2>
           <button
             onClick={onFechar}
             className="text-white hover:text-gray-200 text-2xl font-bold"
@@ -166,9 +166,9 @@ export function ModalCardapio({ mostrar, onFechar }: ModalCardapioProps) {
         {/* Corpo */}
         <div className="flex-1 overflow-y-auto p-6">
           {erro && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 flex justify-between items-center">
+            <div className="bg-red-50 border border-red-200 text-rose-700 px-4 py-3 rounded-lg mb-4 flex justify-between items-center">
               <span>{erro}</span>
-              <button onClick={() => setErro('')} className="text-red-700 font-bold">✕</button>
+              <button onClick={() => setErro('')} className="text-rose-700 font-bold">✕</button>
             </div>
           )}
 
@@ -177,7 +177,7 @@ export function ModalCardapio({ mostrar, onFechar }: ModalCardapioProps) {
             <div className="mb-6">
               <button
                 onClick={handleNovoProduto}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition"
+                className="bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded transition"
               >
                 + Novo Produto
               </button>
@@ -200,7 +200,7 @@ export function ModalCardapio({ mostrar, onFechar }: ModalCardapioProps) {
                     type="text"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-slate-800"
                     placeholder="Ex: Feijão Tropeiro"
                     disabled={salvando}
                   />
@@ -216,7 +216,7 @@ export function ModalCardapio({ mostrar, onFechar }: ModalCardapioProps) {
                     min="0"
                     value={preco}
                     onChange={(e) => setPreco(e.target.value)}
-                    className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-slate-800"
                     placeholder="0.00"
                     disabled={salvando}
                   />
@@ -229,7 +229,7 @@ export function ModalCardapio({ mostrar, onFechar }: ModalCardapioProps) {
                   <select
                     value={categoria}
                     onChange={(e) => setCategoria(e.target.value)}
-                    className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-slate-800"
                     disabled={salvando}
                   >
                     {categorias.map((cat) => (
@@ -260,7 +260,7 @@ export function ModalCardapio({ mostrar, onFechar }: ModalCardapioProps) {
                   <textarea
                     value={descricao}
                     onChange={(e) => setDescricao(e.target.value)}
-                    className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-slate-800"
                     rows={2}
                     placeholder="Descrição do produto (opcional)"
                     disabled={salvando}
@@ -272,9 +272,9 @@ export function ModalCardapio({ mostrar, onFechar }: ModalCardapioProps) {
                 <button
                   onClick={handleSalvar}
                   disabled={salvando}
-                  className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded transition"
+                  className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded transition"
                 >
-                  {salvando ? 'Salvando...' : '💾 Salvar'}
+                  {salvando ? 'Salvando...' : ' Salvar'}
                 </button>
                 <button
                   onClick={limparFormulario}
@@ -331,8 +331,8 @@ export function ModalCardapio({ mostrar, onFechar }: ModalCardapioProps) {
                         onClick={() => handleToggleDisponivel(produto)}
                         className={`${
                           produto.disponivel
-                            ? 'bg-yellow-500 hover:bg-yellow-600'
-                            : 'bg-green-500 hover:bg-green-600'
+                            ? 'bg-yellow-700 hover:bg-yellow-800'
+                            : 'bg-green-700 hover:bg-green-800'
                         } text-white text-xs font-bold py-2 px-3 rounded transition`}
                         title={produto.disponivel ? 'Marcar como indisponível' : 'Marcar como disponível'}
                       >
@@ -340,14 +340,14 @@ export function ModalCardapio({ mostrar, onFechar }: ModalCardapioProps) {
                       </button>
                       <button
                         onClick={() => handleEditarProduto(produto)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded transition"
+                        className="bg-slate-500 hover:bg-slate-600 text-white text-xs font-bold py-2 px-3 rounded transition"
                         title="Editar produto"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleExcluir(produto.id, produto.nome)}
-                        className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-3 rounded transition"
+                        className="bg-rose-800 hover:bg-rose-900 text-white text-xs font-bold py-2 px-3 rounded transition"
                         title="Excluir produto"
                       >
                         Excluir

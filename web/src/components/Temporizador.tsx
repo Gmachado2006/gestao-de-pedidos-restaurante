@@ -49,7 +49,7 @@ export function Temporizador({ iniciado_em, status }: TemporizadorProps) {
         e.stopPropagation();
         setOculto(!oculto);
       }}
-      className="text-xs bg-red-500 text-white px-2 py-1 rounded font-mono hover:bg-red-600 transition ml-2"
+      className="text-xs bg-red-700 text-white px-2 py-1 rounded font-mono hover:bg-red-800 transition ml-2"
       title={oculto ? 'Mostrar tempo' : 'Ocultar tempo'}
     >
       {oculto ? ' ---' : ` ${tempo}`}
