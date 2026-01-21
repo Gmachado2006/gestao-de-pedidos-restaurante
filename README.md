@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Feijuca Gourmet - Sistema de Gestão de Restaurante
 
 Um sistema moderno de gestão de restaurante que substitui as tradicionais comandas de papel por uma interface digital com Kanban interativo (drag & drop).
@@ -280,3 +281,6 @@ MIT License - veja LICENSE para detalhes.
 ## Suporte
 
 Para dúvidas ou problemas, abra uma issue no repositório.
+=======
+# gestao-de-pedidos-restaurante
+>>>>>>> d8ad371a756abbceb94b4cad5d1d7a1ab0637e8f
