@@ -13,6 +13,7 @@ const app: Express = express();
 const allowedOrigins = [
   'http://localhost:3000',
   'http://backend:3000',
+  'http://localhost:3002'
 ];
 
 app.use(cors({
